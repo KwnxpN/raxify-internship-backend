@@ -122,3 +122,78 @@ export const createEvent = async (req: Request<{}, {}, CreateEventRequestBody>, 
     });
   }
 }
+
+export interface UpdateRegisteredCountRequestBody {
+  registeredCount: number;
+}
+
+const validateUpdateRegisteredCountRequestBody = (body: UpdateRegisteredCountRequestBody): string | null => {
+  const { registeredCount } = body;
+
+  if (registeredCount === undefined) {
+    return "Registered count is required";
+  }
+
+  if (registeredCount < 0) {
+    return "Registered count cannot be negative";
+  }
+
+  if (isNaN(registeredCount)) {
+    return "Registered count must be a number";
+  }
+
+  return null;
+}
+
+export const updateRegisteredCount = async (req: Request<{ id: string }, {}, UpdateRegisteredCountRequestBody>, res: Response) => {
+  const { id } = req.params;
+  const { registeredCount } = req.body;
+
+  // Validate request body
+  const validationError = validateUpdateRegisteredCountRequestBody(req.body);
+  if (validationError) {
+    res.status(400).json({
+      success: false,
+      error: validationError,
+    });
+    return;
+  }
+
+  try {
+    const [event] = await db.select().from(events).where(eq(events.id, id)).limit(1);
+
+    // Not found event
+    if (!event) {
+      res.status(404).json({
+        success: false,
+        error: "Event not found",
+      });
+      return;
+    }
+
+    if (event.maxParticipants && (registeredCount > event.maxParticipants)) {
+      res.status(400).json({
+        success: false,
+        error: "Registered count cannot exceed maximum participants",
+      });
+      return;
+    }
+
+    // Update registered count
+    const [updatedEvent] = await db.update(events)
+      .set({ registeredCount })
+      .where(eq(events.id, id))
+      .returning();
+
+    res.status(200).json({
+      success: true,
+      data: updatedEvent,
+    });
+  } catch (error) {
+    console.error("Error updating registered count:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal Server Error",
+    });
+  }
+};
