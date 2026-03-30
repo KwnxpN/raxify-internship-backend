@@ -13,6 +13,13 @@ app.use(cors({
   origin: '*',
 }));
 
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    message: 'Server is healthy',
+  });
+});
+
 app.use('/api/events', eventsRoutes);
 
 app.listen(PORT, () => {
