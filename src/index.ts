@@ -13,8 +13,11 @@ app.use(cors({
   origin: '*',
 }));
 
-app.get('/', (req, res) => {
-  res.send('Hello, World! Ayoo!');
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    message: 'Server is healthy',
+  });
 });
 
 app.use('/api/events', eventsRoutes);
