@@ -13,10 +13,6 @@ app.use(cors({
   origin: '*',
 }));
 
-app.get('/', (req, res) => {
-  res.send('Hello, World! Ayoo!');
-});
-
 app.use('/api/events', eventsRoutes);
 
 app.listen(PORT, () => {
